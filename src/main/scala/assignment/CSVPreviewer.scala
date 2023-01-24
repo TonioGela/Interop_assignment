@@ -1,3 +1,6 @@
+package assignment
+
+
 import scala.collection.mutable
 import scala.io.BufferedSource
 

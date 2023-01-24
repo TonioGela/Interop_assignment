@@ -1,6 +1,8 @@
+package assignment
+
 object Main {
   def main(args: Array[String]): Unit = {
-    val csvPreviewer: CSVPreviewer = CSVChecker.parseCSV(scala.io.Source.fromFile("data.csv"))
+    val csvPreviewer: CSVPreviewer = CSVChecker.parseCSV(scala.io.Source.fromResource("data.csv"))
     println("----------------------")
     csvPreviewer.showCSV()
     println("----------------------")
