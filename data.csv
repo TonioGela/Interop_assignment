@@ -1,0 +1,11 @@
+id     ,name    ,surname   ,birth-year ,country       ,amount  ,currency
+10001  ,Mario   ,Catozzo   ,      1956 ,Greece        ,100000  ,EUR
+10002  ,Galileo ,Galilei   ,      1564 ,Italy         ,-100    ,ITL
+10003  ,Ursula  ,Le Guin   ,      1929 ,United States ,1234567 ,USD
+10004  ,Martin  ,Odersky   ,      1958 ,Germany       ,90345   ,EUR
+10005  ,Anakin  ,Skywalker ,      1990 ,Tatooine      ,5       ,ITL
+10005  ,Darth   ,Vader     ,      1990 ,Coruscant     ,654321  ,ITL
+10006  ,Karen   ,          ,      1975 ,United States ,1450    ,USD
+10007  ,Luigi   ,Mario     ,      1981 ,Greece         ,110     ,
+       ,Jimmy   ,Ridimmi   ,      1931 ,Faroe Islands ,30      ,GBP
+100ten ,Ranma   ,Saotome   ,      1996 ,Japan         ,3489    ,EUR

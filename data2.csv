@@ -1,0 +1,3 @@
+id     ,name    ,surname   ,birth-year ,country       ,amount  ,currency
+10002  ,Galileo ,Galilei   ,      1564 ,Italy         ,200    ,USD
+10007  ,Luigi   ,Mario     ,      1981 ,Greece         ,-100     ,EUR
