@@ -1,13 +1,18 @@
 package assignment
 
-
 import scala.collection.mutable
 import scala.io.BufferedSource
 
-case class csvLine(id: Int, name:Option[String], surname: Option[String], birthyear: Option[Int],
-                   country: Option[String], amount: Option[Int], currency: Option[String])
+case class CsvRow(
+  id: Int,
+  name:Option[String],
+  surname: Option[String],
+  birthyear: Option[Int],
+  country: Option[String],
+  money: Option[(Int,String)]
+)
 
-case class CSVPreviewer(csv: mutable.ArrayBuffer[csvLine]) {
+case class CSVPreviewer(csv: mutable.ArrayBuffer[CsvRow]) {
   def showCSV(): Unit = csv.foreach(println(_))
 
   def richestAndPoorest(): Unit = {
@@ -56,11 +61,44 @@ object EUconversions{
   val ITL = 1936.27
 }
 
+object CSVChecker {
 
-object CSVChecker{
-  def parseCSV(csvSource: BufferedSource): CSVPreviewer = {
-    val lines: Iterator[String] = csvSource.getLines().drop(1)  // Skip the headers
-    val csvPreviewer:CSVPreviewer = CSVPreviewer(mutable.ArrayBuffer[csvLine]())  // Initialize the structure that will contain the CSV
+
+
+  def parseCSV(csvSource: List[String]): CSVPreviewer = {
+    val lines: List[String] = csvSource.drop(1)  // Skip the headers
+
+    val rows: List[Either[String, CsvRow]] = lines.zipWithIndex.map { case (line, index) => 
+      val rawTokens: List[String] = line.split(",", -1).toList
+
+      def getIfNonEmpty(n: Int): Option[String] = {
+        if(rawTokens.isDefinedAt(n)) Some(rawTokens(n)).filterNot(_.isBlank)
+        else None
+      }
+
+      def getOrElseInt(n: Int): Option[Int] =
+        getIfNonEmpty(n).flatMap(s => s.toIntOption)
+
+      if (rawTokens.length != 7) Left(s"The line at index $index was shorter than needed")
+      else {
+        val maybeID: Either[String,Int] =
+          getOrElseInt(0).filter(x => x > 0).toRight(s"The id at index $index was not a positive integer")
+        
+        val maybeHeadOfTheRow: Either[String,(Int, Option[String], Option[String])] = maybeID.flatMap { id =>
+          (getIfNonEmpty(1), getIfNonEmpty(2)) match {
+            case (name, surname) => Right((id, name, surname))
+            case (None, None) => Left(s"The line at index $index doesn't contain neither a name or a surname")
+          }
+        }
+
+        maybeHeadOfTheRow.map { case (id, name, surname) =>
+        
+        
+        }
+      }
+    }
+
+    val csvPreviewer:CSVPreviewer = CSVPreviewer(mutable.ArrayBuffer[CsvRow]())  // Initialize the structure that will contain the CSV
     val uniqueIds: mutable.Set[Int] = mutable.Set[Int]()  // Set of IDs met while parsing
     for ((line, index) <- lines.zipWithIndex) {
       val lineArray: Array[String] = line.split(",").map(_.trim)
