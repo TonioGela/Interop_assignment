@@ -5,7 +5,7 @@ import scala.io.BufferedSource
 
 case class CsvRow(
   id: Int,
-  name:Option[String],
+  name: Option[String],
   surname: Option[String],
   birthyear: Option[Int],
   country: Option[String],
@@ -63,82 +63,61 @@ object EUconversions{
 
 object CSVChecker {
 
-
-
-  def parseCSV(csvSource: List[String]): CSVPreviewer = {
+  def parseCSV(csvSource: List[String]): List[CsvRow] = {
     val lines: List[String] = csvSource.drop(1)  // Skip the headers
 
-    val rows: List[Either[String, CsvRow]] = lines.zipWithIndex.map { case (line, index) => 
+    val maybeRows: List[Either[String, CsvRow]] = lines.zipWithIndex.map { case (line, index) => 
       val rawTokens: List[String] = line.split(",", -1).toList
 
       def getIfNonEmpty(n: Int): Option[String] = {
-        if(rawTokens.isDefinedAt(n)) Some(rawTokens(n)).filterNot(_.isBlank)
+        if(rawTokens.isDefinedAt(n)) Some(rawTokens(n)).filterNot(_.isBlank).map(_.trim)
         else None
       }
 
-      def getOrElseInt(n: Int): Option[Int] =
-        getIfNonEmpty(n).flatMap(s => s.toIntOption)
+      def getOrElseInt(n: Int): Option[Int] = for {
+        s <- getIfNonEmpty(n)
+        x <- s.toIntOption
+      } yield x
 
       if (rawTokens.length != 7) Left(s"The line at index $index was shorter than needed")
       else {
-        val maybeID: Either[String,Int] =
+        val maybeID: Either[String, Int] =
           getOrElseInt(0).filter(x => x > 0).toRight(s"The id at index $index was not a positive integer")
         
         val maybeHeadOfTheRow: Either[String,(Int, Option[String], Option[String])] = maybeID.flatMap { id =>
           (getIfNonEmpty(1), getIfNonEmpty(2)) match {
-            case (name, surname) => Right((id, name, surname))
             case (None, None) => Left(s"The line at index $index doesn't contain neither a name or a surname")
+            case (name, surname) => Right((id, name, surname))
           }
         }
 
         maybeHeadOfTheRow.map { case (id, name, surname) =>
-        
-        
-        }
-      }
-    }
+          val maybeBirthYear: Option[Int] = getOrElseInt(3)
+          val maybeCountry: Option[String] = getIfNonEmpty(4)
 
-    val csvPreviewer:CSVPreviewer = CSVPreviewer(mutable.ArrayBuffer[CsvRow]())  // Initialize the structure that will contain the CSV
-    val uniqueIds: mutable.Set[Int] = mutable.Set[Int]()  // Set of IDs met while parsing
-    for ((line, index) <- lines.zipWithIndex) {
-      val lineArray: Array[String] = line.split(",").map(_.trim)
-
-      def getOrElse(n: Int): Option[String] = {
-        if(lineArray.isDefinedAt(n)) Some(lineArray(n)).filterNot(_.isEmpty)
-        else None
-      }
-
-      def getOrElseInt(n: Int): Option[Int] = {
-        if (lineArray.isDefinedAt(n)) {
-          try {
-            Some(lineArray(n).toInt)
-          } catch {
-            case _: Exception => None
+          val maybeMoney: Option[(Int, String)] = getOrElseInt(5).map { amount =>
+            val maybeCurrency: Option[String] = getIfNonEmpty(6)
+            (amount, maybeCurrency.getOrElse("EUR"))
           }
+        
+          CsvRow(id, name, surname, maybeBirthYear, maybeCountry, maybeMoney)
         }
-        else None
-      }
-
-      // mapping of the array on the csvLine class
-      val lineCSV: csvLine = csvLine(getOrElseInt(0).getOrElse(-1), getOrElse(1), getOrElse(2), getOrElseInt(3),
-        getOrElse(4), getOrElseInt(5), getOrElse(6))
-      lineCSV match {
-        case line if line.id < 0 || uniqueIds.contains(line.id) => println(s"The row number $index does not have a valid ID")
-        case line if line.name.isEmpty && line.surname.isEmpty => println(s"The row number $index with ID ${line.id} does not have at least one member between name and surname")
-        case _ =>
-          // Adding the ID to the set of unique IDs
-          uniqueIds += lineCSV.id
-          // Implementing the last check if the amount is present without the currency
-          if (lineCSV.amount.isDefined && lineCSV.currency.isEmpty) {
-            println(s"The row number $index does not have a valid currency, EUR is set by default")
-            // save the line forcing currency to EUR
-            csvPreviewer.csv += csvLine(lineCSV.id, lineCSV.name, lineCSV.surname, lineCSV.birthyear,
-              lineCSV.country, lineCSV.amount, Option("EUR"))
-          } // All checks passed, save the line
-          else csvPreviewer.csv += lineCSV
       }
     }
-    csvSource.close
-    csvPreviewer
+
+    // I left li vogliamo stampare,
+    // I right li vogliamo accumulare
+
+    // Usiamo fold accumulando una lista di CsvRow, i left li stampiamo come side effect
+    val rows: List[CsvRow] = maybeRows.foldLeft(List.empty[CsvRow]){ case (rows, elem) => 
+      elem match {
+        case Left(err) =>
+          System.err.println(err)
+          rows
+        case Right(row) => row :: rows
+      }
+    }
+
+    rows.distinctBy(_.id)
   }
 }
