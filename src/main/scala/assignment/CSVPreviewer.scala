@@ -39,7 +39,9 @@ case class CSVPreviewer(csv: mutable.ArrayBuffer[CsvRow]) {
   }
 
   def countryUsers(country:String): Unit = {
-    println(s"$country users: " + csv.filter(_.country.getOrElse("") == country).map(line => line.surname.getOrElse(line.name.getOrElse(""))))
+    println(s"$country users: " + 
+      csv.filter(_.country.getOrElse("") == country).map(line => line.surname.getOrElse(line.name.getOrElse("")))
+    )
   }
 
   def countryCurrency(currencyCheck: String): Unit = {
@@ -47,11 +49,22 @@ case class CSVPreviewer(csv: mutable.ArrayBuffer[CsvRow]) {
   }
 
   def topFiveCountries(): Unit ={
-    val countries: mutable.ArrayBuffer[(String, Int)] = csv.map(line => (line.country.getOrElse(""), csv.count(_.country.getOrElse("") ==
-      line.country.getOrElse("")))).distinct.sortWith(_._2 > _._2)
+    // val countries: mutable.ArrayBuffer[(String, Int)] = 
+    //   csv.map { line => 
+    //     val country = line.country.getOrElse("")
+    //     (country, csv.count(_.country.getOrElse("") == country))
+    //   }.distinct.sortWith(_._2 > _._2)
     println("Top five countries: ")
-    if (countries.size < 5) println(countries)
-    else for(i <- 0 until 5) println(countries(i))
+    
+    csv.foldLeft(Map.empty[String, Int]){ case (map, line) =>
+      map.updatedWith(line.country.getOrElse("")){
+        case Some(x) => Some(x + 1)
+        case None => Some(1)
+      }
+    }.toList.take(5).foreach { case (country, count) => println(s"$country -> $count")}
+    
+    // if (countries.size < 5) println(countries)
+    // else for(i <- 0 until 5) println(countries(i))
   }
 }
 
